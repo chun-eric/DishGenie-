@@ -1,33 +1,44 @@
+"use client";
 import { useState } from "react";
 
 const Main = () => {
   const [ingredients, setIngredients] = useState([]); // ingredients array state
-  const [inputValue, setInputValue] = useState(""); // input value state
 
-  function handleSubmit(event) {
-    event.preventDefault();
+  // use the new React 19 formData and action attributes on forms
+  // currently however the form actions isnt working on my react version even though it is react 19
 
+  // function addIngredient(event) {
+  //   event.preventDefault();
+  //   // how to grab the form data
+  //   const formData = new FormData(event.currentTarget);
+  //   const newIngredient = formData.get("ingredient");
+  //   console.log(newIngredient);
+  //   // Update the ingredients array state and render the list
+  //   setIngredients((prev) => [...prev, newIngredient]);
+
+  //   // Reset the form
+  //   setInputValue("");
+  // }
+
+  // The new React 19 form action works!!
+  async function handleIngredient(formData) {
     // how to grab the form data
-    const formData = new FormData(event.currentTarget);
     const newIngredient = formData.get("ingredient");
-
     // Update the ingredients array state and render the list
     setIngredients((prev) => [...prev, newIngredient]);
-
-    // Reset the form
-    setInputValue("");
   }
 
   return (
     <div className='max-w-4xl min-h-screen px-6 mx-auto my-20'>
       <main className=''>
         <form
-          onSubmit={handleSubmit}
+          action={handleIngredient}
+          // onSubmit={addIngredient}
           className='flex flex-col items-center justify-center gap-3 sm:flex-row'
         >
           <input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            // value={inputValue}
+            // onChange={(e) => setInputValue(e.target.value)}
             className='px-4 h-12 outline-none sm:w-[70%] rounded-md border  w-[95%] border-[#D1D5DB] placeholder:text-sm'
             type='text'
             placeholder='e.g. Garlic '
