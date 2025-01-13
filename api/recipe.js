@@ -19,7 +19,7 @@ function setJSTMidnight(date) {
   return jstDate;
 }
 
-// Track both count and the exact start time in JST
+// Tracks both count and the exact start time in JST
 let requestTracker = {
   count: 0,
   startTime: setJSTMidnight(new Date()), // 12:01 AM JST today
@@ -48,8 +48,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const nowJST = getJSTDate();
-  const todayStartJST = setJSTMidnight(nowJST); // 12:01 AM JST today
+  //
+  const nowJST = getJSTDate(); // get current time in Japan
+  const todayStartJST = setJSTMidnight(nowJST); // get today at 12:01 AM in Japan
 
   // Check if we need to reset the counter (it's past midnight JST)
   if (nowJST >= todayStartJST && requestTracker.startTime < todayStartJST) {
