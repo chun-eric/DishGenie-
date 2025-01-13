@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Recipe from "./Recipe";
 import IngredientsList from "./IngredientsList";
+import { getRecipeFromDishGenie, getRecipeFromMistral } from "../ai";
 
 const Main = () => {
   const [ingredients, setIngredients] = useState([
