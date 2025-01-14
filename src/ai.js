@@ -1,4 +1,4 @@
-import { HfInference } from "@huggingface/inference";
+// import { HfInference } from "@huggingface/inference";
 
 export const SYSTEM_PROMPT = `
 You are an expert assistant that receives a list of ingredients that a user has and suggests a recipe they could make with some or all of those ingredients. You don't need to use every ingredient they mention in your recipe. The recipe can include additional ingredients they didn't mention, but try not to include too many extra ingredients. Format your response in markdown to make it easier to render to a web page
@@ -15,13 +15,11 @@ You are an expert assistant that receives a list of ingredients that a user has 
 
 // Add the validation here, before creating any API instances
 
-if (import.meta.env.HUGGINGFACE_API_KEY) {
-  throw new Error("Missing Hugging Face API key");
-}
-
 // API Call
 export async function getRecipeFromDishGenie(ingredientsArray) {
   try {
+    console.log("Sending ingredients:", ingredientsArray); // Debug log
+
     const response = await fetch("/api/recipe", {
       method: "POST",
       headers: {
@@ -30,39 +28,54 @@ export async function getRecipeFromDishGenie(ingredientsArray) {
       body: JSON.stringify({ ingredientsArray }),
     });
 
+    console.log("Response status:", response.status); // Debug log
+
+    // Check if the response is ok before trying to parse JSON
     if (!response.ok) {
-      throw new Error("Failed to fetch recipe");
+      const errorText = await response.text();
+      console.error("Error response:", errorText); // Debug log
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
-    return data.recipe;
+    try {
+      const data = await response.json();
+      console.log("Parsed response:", data); // Debug log
+      return data.recipe;
+    } catch (parseError) {
+      console.error("JSON Parse Error:", parseError);
+      throw new Error("Failed to parse response JSON");
+    }
   } catch (error) {
-    console.error("Error calling Anthropic API:", error.message);
+    console.error("API Error:", error);
     throw error;
   }
 }
 
+// if (import.meta.env.HUGGINGFACE_API_KEY) {
+//   throw new Error("Missing Hugging Face API key");
+// }
+
 // Hugging Face Instace
-const hf = new HfInference(import.meta.env.HUGGINGFACE_API_KEY);
+// const hf = new HfInference(import.meta.env.HUGGINGFACE_API_KEY);
 
 // API Call
-export async function getRecipeFromMistral(ingredientsArray) {
-  const ingredientsString = ingredientsArray.join(", ");
+// export async function getRecipeFromMistral(ingredientsArray) {
+//   const ingredientsString = ingredientsArray.join(", ");
 
-  try {
-    const response = await hf.chatCompletion({
-      model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: `I have ${ingredientsString}. Please give me a recipe you'd recommend I make!`,
-        },
-      ],
-    });
+//   try {
+//     const response = await hf.chatCompletion({
+//       model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
+//       messages: [
+//         { role: "system", content: SYSTEM_PROMPT },
+//         {
+//           role: "user",
+//           content: `I have ${ingredientsString}. Please give me a recipe you'd recommend I make!`,
+//         },
+//       ],
+//     });
 
-    return response.choices[0].message.content;
-  } catch (error) {
-    console.error(error.message);
-  }
-}
+//     return response.choices[0].message.content;
+//   } catch (error) {
+//     console.error(error.message);
+//   }
+// }

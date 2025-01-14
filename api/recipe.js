@@ -1,16 +1,69 @@
+// api/recipe.js
+import { MongoClient } from "mongodb";
+import mongoose from "mongoose";
+import express from "express";
+import cors from "cors";
 import Anthropic from "@anthropic-ai/sdk";
+import dotenv from "dotenv";
+dotenv.config();
 
-// Daily request limit
-const DAILY_LIMIT = 100;
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-// This ensures we're working in JST timezone
+// MongoDB Schemas
+const recipeSchema = new mongoose.Schema({
+  ingredients: [String],
+  recipe: String,
+  createdAt: { type: Date, default: Date.now },
+  // Add more fields if needed, like:
+  title: String,
+  cookingTime: Number,
+  servings: Number,
+});
+
+const requestCounterSchema = new mongoose.Schema({
+  date: { type: Date, required: true },
+  count: { type: Number, default: 0 },
+});
+
+const Recipe = mongoose.model("Recipe", recipeSchema);
+const RequestCounter = mongoose.model("RequestCounter", requestCounterSchema);
+
+// Connect to MongoDB
+mongoose
+  .connect(import.meta.env.MONGODB_URI)
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error("MongoDB connection error:", err));
+
+// You can also listen for connection events
+mongoose.connection.on("error", (err) => {
+  console.log("🔴 MongoDB Error:", err);
+});
+// Date utilities
+
+// Initialize MongoDB connection
+let cachedDb = null;
+
+async function connectToDatabase() {
+  if (cachedDb) {
+    return cachedDb;
+  }
+  const client = await MongoClient.connect(import.meta.env.MONGODB_URI);
+
+  const db = client.db(import.meta.env.MONGODB_DB);
+  cachedDb = db;
+  console.log("connected to Mongodb");
+  return db;
+}
+
+// Get JST date utilities
 function getJSTDate() {
   return new Date(
     new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" })
   );
 }
 
-// Function to set time to 12:01 AM JST for a given date
 function setJSTMidnight(date) {
   const jstDate = new Date(
     date.toLocaleString("en-US", { timeZone: "Asia/Tokyo" })
@@ -19,76 +72,64 @@ function setJSTMidnight(date) {
   return jstDate;
 }
 
-// Tracks both count and the exact start time in JST
-let requestTracker = {
-  count: 0,
-  startTime: setJSTMidnight(new Date()), // 12:01 AM JST today
-};
-
-const SYSTEM_PROMPT = `You are an expert assistant that receives a list of ingredients that a user has and suggests a recipe they could make with some or all of those ingredients. You don't need to use every ingredient they mention in your recipe. The recipe can include additional ingredients they didn't mention, but try not to include too many extra ingredients. Format your response in markdown to make it easier to render to a web page`;
-
-// Check if we're in development
-const isDevEnvironment = process.env.MODE_ENV === "development";
-
-// Use the appropriate env variable access method
-const apiKey = isDevEnvironment
-  ? import.meta.env.ANTHROPIC_API_KEY
-  : process.env.ANTHROPIC_API_KEY;
-
-// Serverless Function.
-// Front end makes a request to /api/recipe
-// Serverless Function wakes up and calls Anthropic
-// Anthropic returns recipe
-// Serverless Function sends recipe back to frontend
-// Serverless Function goes back to sleep
-
 export default async function handler(req, res) {
-  // Check if request is a POST request
+  if (req.method === "POST") {
+    res.status(200).end();
+    return;
+  }
+
+  // Only allow POST requests
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  //
-  const nowJST = getJSTDate(); // get current time in Japan
-  const todayStartJST = setJSTMidnight(nowJST); // get today at 12:01 AM in Japan
-
-  // Check if we need to reset the counter (it's past midnight JST)
-  if (nowJST >= todayStartJST && requestTracker.startTime < todayStartJST) {
-    requestTracker = {
-      count: 0,
-      startTime: todayStartJST,
-    };
-  }
-
-  // Check if we've hit the daily limit
-  if (requestTracker.count >= DAILY_LIMIT) {
-    // Calculate time until next reset (12:01 AM JST tomorrow)
-    const tomorrowJST = new Date(nowJST);
-    tomorrowJST.setDate(tomorrowJST.getDate() + 1);
-    tomorrowJST.setHours(0, 1, 0, 0);
-
-    return res.status(429).json({
-      error: "Daily limit exceeded. Please try again tomorrow.",
-      currentCount: requestTracker.count,
-      limitResetTime: tomorrowJST,
-      timeZone: "JST",
-    });
-  }
-
   try {
-    // Initialize Anthropic with your API Key
-    const anthropic = new Anthropic({
-      apiKey: apiKey,
+    // Connect to MongoDB
+    const db = await connectToDatabase();
+    const requestsCollection = db.collection("requests");
+
+    // Get current JST time and today's start
+    const nowJST = getJSTDate();
+    const todayStartJST = setJSTMidnight(nowJST);
+
+    // Get today's request count
+    const todayRequests = await requestsCollection.findOne({
+      date: { $gte: todayStartJST },
     });
 
-    // Get ingredients Array from request body
+    const currentCount = todayRequests?.count || 0;
+
+    // Check daily limit
+    if (currentCount >= 100) {
+      const tomorrowStartJST = new Date(todayStartJST);
+      tomorrowStartJST.setDate(tomorrowStartJST.getDate() + 1);
+
+      return res.status(429).json({
+        error: "Daily limit exceeded. Please try again tomorrow.",
+        currentCount,
+        nextReset: tomorrowStartJST,
+        timeZone: "JST",
+      });
+    }
+
+    // Get ingredients from request
     const { ingredientsArray } = req.body;
 
-    // Make API Call to Anthropic
-    const msg = await anthropic.messages.create({
+    if (!ingredientsArray || !Array.isArray(ingredientsArray)) {
+      return res.status(400).json({ error: "Invalid ingredients array" });
+    }
+
+    // Initialize Anthropic client
+    const anthropic = new Anthropic({
+      apiKey: import.meta.env.CLAUDE_API_KEY,
+    });
+
+    // Call Anthropic API
+    const response = await anthropic.messages.create({
       model: "claude-3-haiku-20240307",
       max_tokens: 1024,
-      system: SYSTEM_PROMPT,
+      system:
+        "You are an expert assistant that receives a list of ingredients and suggests a recipe they could make with some or all of those ingredients. Format your response in markdown.",
       messages: [
         {
           role: "user",
@@ -99,24 +140,32 @@ export default async function handler(req, res) {
       ],
     });
 
-    // Increment the counter
-    requestTracker.count++;
+    // Update request count in MongoDB
+    await requestsCollection.updateOne(
+      { date: todayStartJST },
+      {
+        $inc: { count: 1 },
+        $setOnInsert: { date: todayStartJST },
+      },
+      { upsert: true }
+    );
 
-    // Calculate time until next reset in JST
-    const nextResetJST = new Date(nowJST);
-    nextResetJST.setDate(nextResetJST.getDate() + 1);
-    nextResetJST.setHours(0, 1, 0, 0);
-
-    // send successful response back to frontend
+    // Send successful response
     res.status(200).json({
-      recipe: msg.content[0].text,
-      remainingRequests: DAILY_LIMIT - requestTracker.count,
-      nextReset: nextResetJST,
+      recipe: response.content[0].text,
+      remainingRequests: 100 - (currentCount + 1),
+      nextReset: new Date(todayStartJST.getTime() + 24 * 60 * 60 * 1000),
       timeZone: "JST",
-      currentTimeJST: nowJST,
     });
   } catch (error) {
-    console.error("API Error", error);
-    res.status(500).json({ error: "Failed to get recipe" });
+    console.error("API Error:", error);
+    if (error.status === 401) {
+      res.status(401).json({ error: "Invalid API Key" });
+    } else {
+      res.status(500).json({
+        error: "Failed to generate recipe",
+        details: error.message,
+      });
+    }
   }
 }

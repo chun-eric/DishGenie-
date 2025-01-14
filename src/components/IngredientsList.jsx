@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 
-const IngredientsList = ({ ingredients, handleRecipeShown }) => {
+const IngredientsList = ({ ingredients, getRecipe }) => {
   return (
     <section className='px-1 mt-12 sm:w-full'>
       <div className='flex flex-col mb-8'>
@@ -30,7 +30,7 @@ const IngredientsList = ({ ingredients, handleRecipeShown }) => {
             </p>
           </div>
           <button
-            onClick={handleRecipeShown}
+            onClick={getRecipe}
             className='px-6 py-3 text-sm rounded-md bg-[#D17557] text-white font-semibold mt-4 sm:mt-0'
           >
             Make my recipe
@@ -43,6 +43,7 @@ const IngredientsList = ({ ingredients, handleRecipeShown }) => {
 
 IngredientsList.propTypes = {
   ingredients: PropTypes.arrayOf(PropTypes.string).isRequired,
+  getRecipe: PropTypes.func.isRequired, // Add this line
   handleRecipeShown: PropTypes.func.isRequired,
 };
 

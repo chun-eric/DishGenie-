@@ -12,6 +12,10 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.33.1",
     "@huggingface/inference": "^2.8.1",
+    "@vercel/analytics": "^1.4.1",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "mongodb": "^6.12.0",
     "react": "19.0.0",
     "react-dom": "19.0.0"
   },

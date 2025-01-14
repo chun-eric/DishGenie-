@@ -2,43 +2,36 @@
 import { useState } from "react";
 import Recipe from "./Recipe";
 import IngredientsList from "./IngredientsList";
-import { getRecipeFromDishGenie, getRecipeFromMistral } from "../ai";
+import { getRecipeFromDishGenie } from "../ai";
 
 const Main = () => {
-  const [ingredients, setIngredients] = useState([
-    "all the main spices",
-    "pasta",
-    "ground beef",
-    "tomato paste",
-  ]); // ingredients array state
-  const [recipeShown, setRecipeShown] = useState(false);
+  const [ingredients, setIngredients] = useState([]); // ingredients array state
+  const [recipeShown, setRecipeShown] = useState(false); // recipe shown state
+  const [loading, setLoading] = useState(false);
 
   // use the new React 19 formData and action attributes on forms
   // currently however the form actions isnt working on my react version even though it is react 19
 
   // The new React 19 form action works!!
-  async function handleIngredient(formData) {
-    // how to grab the form data
-    // Update the ingredients array state and render the list
-    const ingredientData = Object.fromEntries([
-      ["ingredient", formData.get("ingredient") || ""],
-    ]);
+  async function addIngredient(formData) {
+    // Grab form data and update the ingredients array state and render the list
+    const newIngredient = formData.get("ingredient");
     // print each value
-    console.log("New Ingredient:", ingredientData.ingredient);
-
     // prevent array flattening by creating objects
-    setIngredients((prev) => [...prev, ingredientData]);
+    setIngredients((prev) => [...prev, newIngredient]);
   }
 
-  function handleRecipeShown() {
-    setRecipeShown((prev) => !prev);
+  async function getRecipe() {
+    // run the claude API function
+    const recipeMarkdown = await getRecipeFromDishGenie(ingredients);
+    setRecipeShown(recipeMarkdown);
   }
 
   return (
     <div className='max-w-4xl min-h-screen px-6 mx-auto my-20'>
       <main className=''>
         <form
-          action={handleIngredient}
+          action={addIngredient}
           // onSubmit={addIngredient}
           className='flex flex-col items-center justify-center gap-3 sm:flex-row'
         >
@@ -60,12 +53,9 @@ const Main = () => {
           </button>
         </form>
         {ingredients && ingredients.length > 0 && (
-          <IngredientsList
-            ingredients={ingredients}
-            handleRecipeShown={handleRecipeShown}
-          />
+          <IngredientsList ingredients={ingredients} getRecipe={getRecipe} />
         )}
-        {recipeShown && <Recipe />}
+        {recipeShown && <Recipe recipeShown={recipeShown} />}
       </main>
     </div>
   );

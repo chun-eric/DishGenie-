@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 
-const Recipe = () => {
+const Recipe = ({ recipeShown }) => {
   return (
     <section className='flex flex-col gap-3 px-1 mt-12 sm:w-full'>
-      <h2 className='text-2xl font-bold'>Chef Claude Recommends:</h2>
+      {recipeShown}
+      {/* <h2 className='text-2xl font-bold'>Chef Claude Recommends:</h2>
       <article className='suggested-recipe-container' aria-live='polite'>
         <p className='mt-6 mb-12 leading-6'>
           Based on the ingredients you have available, I would recommend making
@@ -61,7 +62,7 @@ const Recipe = () => {
             cheese if desired.
           </li>
         </ol>
-      </article>
+      </article> */}
     </section>
   );
 };
