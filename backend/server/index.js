@@ -8,8 +8,15 @@ dotenv.config(); // Load environment variables
 
 const app = express(); // Create Express app instance
 
+const allowedOrigins = process.env.ALLOWED_ORIGINS.split(",");
 // Middleware
-app.use(cors()); // enable cors for all routes
+app.use(
+  cors({
+    origin: allowedOrigins,
+    methods: ["POST", "GET"],
+    credentials: true,
+  })
+); // enable cors for all routes
 app.use(express.json()); // parse JSON bodies
 
 // MongoDB connection
