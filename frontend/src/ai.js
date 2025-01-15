@@ -11,11 +11,13 @@
 // Add the validation here, before creating any API instances
 
 // API Call
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 export async function getRecipeFromDishGenie(ingredients) {
   try {
     console.log("Sending ingredients:", ingredients); // Debug log
 
-    const response = await fetch("http://localhost:3000/api/recipe", {
+    const response = await fetch(`${API_URL}/api/recipe`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
