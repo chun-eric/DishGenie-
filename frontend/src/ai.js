@@ -1,11 +1,6 @@
 // import { HfInference } from "@huggingface/inference";
 
-export const SYSTEM_PROMPT = `
-You are an expert assistant that receives a list of ingredients that a user has and suggests a recipe they could make with some or all of those ingredients. You don't need to use every ingredient they mention in your recipe. The recipe can include additional ingredients they didn't mention, but try not to include too many extra ingredients. Format your response in markdown to make it easier to render to a web page
-`;
-
-// 🚨👉 ALERT:  don't commit your API keys
-// to any repositories and don't deploy your project anywhere
+// 🚨👉 ALERT:  don't commit API keys to any repositories and don't deploy your project anywhere
 // live online. Otherwise, anyone could inspect your source
 // and find your API keys/tokens. If you want to deploy
 // this project, you'll need to create a backend of some kind,
@@ -16,18 +11,17 @@ You are an expert assistant that receives a list of ingredients that a user has 
 // Add the validation here, before creating any API instances
 
 // API Call
-export async function getRecipeFromDishGenie(ingredientsArray) {
+export async function getRecipeFromDishGenie(ingredients) {
   try {
-    console.log("Sending ingredients:", ingredientsArray); // Debug log
+    console.log("Sending ingredients:", ingredients); // Debug log
 
-    const response = await fetch("/api/recipe", {
+    const response = await fetch("http://localhost:3000/api/recipe", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ingredientsArray }),
+      body: JSON.stringify({ ingredients }),
     });
-
     console.log("Response status:", response.status); // Debug log
 
     // Check if the response is ok before trying to parse JSON
@@ -37,17 +31,15 @@ export async function getRecipeFromDishGenie(ingredientsArray) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    try {
-      const data = await response.json();
-      console.log("Parsed response:", data); // Debug log
-      return data.recipe;
-    } catch (parseError) {
-      console.error("JSON Parse Error:", parseError);
-      throw new Error("Failed to parse response JSON");
-    }
+    // return recipe data to frontend
+    const data = await response.json();
+    console.log("Parsed response data:", data); // Log parsed dat
+    console.log(data.recipe);
+
+    return data.recipe;
   } catch (error) {
-    console.error("API Error:", error);
-    throw error;
+    console.error("Failed to get recipe:", error);
+    throw new Error("Failed to get recipe. Please try again later.");
   }
 }
 
