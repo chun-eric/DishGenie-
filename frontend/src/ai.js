@@ -12,7 +12,9 @@
 
 // API Call
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL;
+
+// || "http://localhost:3000";
 
 export async function getRecipeFromDishGenie(ingredients) {
   try {
