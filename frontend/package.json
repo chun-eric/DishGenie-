@@ -3,12 +3,13 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "scripts": {
+"scripts": {
+    "prebuild": "npm install",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
-  },
+},
   "dependencies": {
     "@anthropic-ai/sdk": "^0.33.1",
     "@huggingface/inference": "^2.8.1",
