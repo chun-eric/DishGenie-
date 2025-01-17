@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { debounce, throttle } from "../utils/debounceThrottle";
 import Recipe from "./Recipe";
 import IngredientsList from "./IngredientsList";
@@ -9,6 +9,8 @@ const Main = () => {
   const [ingredients, setIngredients] = useState([]); // ingredients array state
   const [recipeShown, setRecipeShown] = useState(false); // recipe shown state
   const [loading, setLoading] = useState(false);
+  const recipeSection = useRef(null);
+  console.log(recipeSection);
 
   // use the new React 19 formData and action attributes on forms
   // currently however the form actions isnt working on my react version even though it is react 19
@@ -42,6 +44,12 @@ const Main = () => {
     }
   }
 
+  useEffect(() => {
+    if (recipeSection.current && recipeShown) {
+      recipeSection.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [recipeShown]);
+
   return (
     <div className='max-w-4xl min-h-screen px-6 mx-auto my-20'>
       <main className=''>
@@ -68,7 +76,11 @@ const Main = () => {
           </button>
         </form>
         {ingredients && ingredients.length > 0 && (
-          <IngredientsList ingredients={ingredients} getRecipe={getRecipe} />
+          <IngredientsList
+            ref={recipeSection}
+            ingredients={ingredients}
+            getRecipe={getRecipe}
+          />
         )}
 
         {loading && (

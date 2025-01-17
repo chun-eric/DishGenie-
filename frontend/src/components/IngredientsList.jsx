@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 
-const IngredientsList = ({ ingredients, getRecipe }) => {
+const IngredientsList = ({ ingredients, getRecipe, ref }) => {
   return (
     <section className='px-1 mt-12 sm:w-full'>
       <div className='flex flex-col mb-8'>
@@ -20,7 +20,10 @@ const IngredientsList = ({ ingredients, getRecipe }) => {
         </ul>
       </div>
       {ingredients.length >= 3 && (
-        <div className='flex flex-col sm:flex-row items-left sm:items-center justify-between w-full rounded-md bg-[#f0efeb] px-8 py-10'>
+        <div
+          ref={ref}
+          className='flex flex-col sm:flex-row items-left sm:items-center justify-between w-full rounded-md bg-[#f0efeb] px-8 py-10'
+        >
           <div className=''>
             <h3 className='text-lg font-semibold leading-6 text-slate-800'>
               Ready for a recipe?
