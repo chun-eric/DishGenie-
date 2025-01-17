@@ -8,7 +8,11 @@ dotenv.config(); // Load environment variables
 
 const app = express(); // Create Express app instance
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS.split(",");
+const allowedOrigins = [
+  process.env.ALLOWED_ORIGIN_DEV,
+  process.env.ALLOWED_ORIGIN_PROD,
+].filter(Boolean);
+
 // Middleware
 app.use(
   cors({
