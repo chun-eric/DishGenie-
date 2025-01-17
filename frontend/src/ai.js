@@ -13,16 +13,21 @@
 // API Call
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 export async function getRecipeFromDishGenie(ingredients) {
   try {
-    console.log("Sending ingredients:", ingredients); // Debug log
+    // Debug log to see exact format of ingredients
+    console.log("Type of ingredients:", typeof ingredients);
+    console.log("Ingredients value:", ingredients);
 
     const response = await fetch(`${API_URL}/api/recipe`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ingredients }),
+      body: JSON.stringify({
+        ingredients: Array.isArray(ingredients) ? ingredients : [ingredients],
+      }),
     });
     console.log("Response status:", response.status); // Debug log
 
@@ -35,7 +40,7 @@ export async function getRecipeFromDishGenie(ingredients) {
 
     // return recipe data to frontend
     const data = await response.json();
-    console.log("Parsed response data:", data); // Log parsed dat
+    console.log("Parsed response data:", data); // Log parsed data
     console.log(data.recipe);
 
     return data.recipe;

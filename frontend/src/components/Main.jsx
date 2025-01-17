@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { debounce, throttle } from "../utils/debounceThrottle";
 import Recipe from "./Recipe";
 import IngredientsList from "./IngredientsList";
 import { getRecipeFromDishGenie } from "../ai";
@@ -22,6 +23,13 @@ const Main = () => {
   }
 
   async function getRecipe() {
+    // Add validation
+    if (!ingredients || ingredients.length < 3) {
+      console.error("Please add at least 3 ingredients");
+      return;
+    }
+    // Debug log
+    console.log("Sending ingredients state:", ingredients);
     // run the claude API function
     setLoading(true);
     try {

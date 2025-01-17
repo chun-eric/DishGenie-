@@ -16,7 +16,7 @@ router.post("/recipe", async (req, res) => {
     const { ingredients } = req.body;
 
     // Validate request for at least 3 ingredients
-    if (!req.body?.ingredients?.length >= 3) {
+    if (!ingredients || !Array.isArray(ingredients) || ingredients.length < 3) {
       return res.status(400).json({
         error: "Please provide at least 3 ingredients",
       });
