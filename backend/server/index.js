@@ -38,6 +38,11 @@ mongoose
 // Routes
 app.use("/api", recipeRoutes);
 
+// Test Route
+app.get("/api/test", (req, res) => {
+  res.json({ message: "API is working" });
+});
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`
